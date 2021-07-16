@@ -2,12 +2,11 @@
 # run the models created by Create_NVTA_Model_Scenarios_All.R script
 # utilize Scenario_Status.csv file for model name and path
 
-# read in csv 
+# read in csv which contains models to be run
 csvpath <- file.path(ve.runtime,"models","Scenario_Status.csv")
 data <- read.csv(csvpath)
 
-
-# go through models in csv and run them each
+#Iterate through and run each model in the CSV
 for(i in 1:nrow(data)){
   
   name <- data[i, "name"]

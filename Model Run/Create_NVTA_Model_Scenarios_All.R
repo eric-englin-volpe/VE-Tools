@@ -2,28 +2,37 @@ library(tidyverse)
 library(tools)
 
 #Set Up Info --
-#scenario_inputs was downloaded from the VDOT Google drive and placed
-# in the /models directory of Vision Eval
-#updated run_parameters.json placed in /scenario_inputs directory
-#script expects VERSPM_NVTA Model already created
+#scenario_inputs defined by user was placed in the /models directory of Vision Eval
 
-#get the list of A-P scenarios
+# /models contain folder for each scenario to be run
+# inside each run folder contains levels of scenario to be run
+# inside each level folder contains files to be swapped out
+
+#script expects VERSPM_NVTA Model i.e. base model to be already created
+# in order to copy from it
+
+#get the list of all scenarios to be created
 files <- list.dirs("models/scenario_inputs",full.names = FALSE,
                    recursive = FALSE)
 
 
 
-# iterate through the A-P scenarios
+# iterate through all scenarios
 # Create a dataframe of scenario names
 modelNames <- vector()
 
+scenario_inputs_path <- "models/scenario_inputs/"
+
 for (item in files){
   cat('Preparing Scenario', item, '\n\n')
-  name <- paste0("models/scenario_inputs/",item)
+  name <- paste0(scenario_inputs_path,item)
   models <- list.files(name, full.names = FALSE, recursive = FALSE,
                       pattern ="[2-9]")
   
   # run through each case excluding the 1 case
+  # changing pattern regex above specifies what levels the script should 
+  #   build folders for
+  
   for (case in models){
     cat('\tPreparing level', case, '\t')
     
@@ -41,13 +50,6 @@ for (item in files){
     if(!dir.exists(file.path(ve.runtime, "models", modelName))){
       runningModel <- base$copy(modelName)
     }
-    
-    #copy in modified 'run_parameters.json' for single year
-    #origin <- file.path(ve.runtime,"models","scenario_inputs","run_parameters.json")
-    #dest <- file.path(ve.runtime,"models",modelName,"defs","run_parameters.json")
-    
-    #param <- file.copy(origin, dest, overwrite = TRUE)
-    
     
     # prepare to copy over user changed input files
     # Use ve.runtime to locate where VisionEval is installed
@@ -74,6 +76,9 @@ for (item in files){
                                              location = runningModel$modelPath,
                                              status = runningModel$status))
   }
+  
+
+# Write records to Scenario_Status.csv file
 
 write.csv(modelNames, file.path(ve.runtime, 'models', 'Scenario_Status.csv'), row.names = F)
 }

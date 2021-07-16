@@ -1,6 +1,8 @@
 # Extract metrics from all run models in ScenarioStatus.csv and save the results
 library(dplyr)
 
+
+#define function to extract metrics from each scenario folder
 extract_scenario_metrics <- function(modelName, Year = '2045'){
   # Will return an error if the model doesn't exist yet
   mod <- openModel(modelName) 
@@ -86,7 +88,8 @@ marea_compiled <- vector()
 hh_compiled <- vector()
 
 
-# go through models in csv and run them each
+# go through models in csv and run extract script on each
+# compile information in household and marea csv
 for(i in 1:nrow(models)){
   # i = 1
   name <- models[i,"name"]
