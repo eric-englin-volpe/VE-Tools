@@ -1,6 +1,27 @@
-
-
+#===========
+#make_template_files.R
+#===========
+#===========
+# Description: 
+#     This file can be used to create template files for azone and bzone input files
+#     Note that this won't make a specific input file but can be useful reference to make files and check for any errors
+#===========
 source("Data Prep/config.R")
+
+# Install/Load libraries --------------
+source("Data Prep/get_packages.R")
+
+library(dplyr)
+library(tidyverse)
+library(tidycensus)
+library(viridis)
+library(leaflet)
+library(readr)
+library(sp)
+library(sf)
+library(rgeos)
+library(rlist)
+
 
 # Make file templates
 

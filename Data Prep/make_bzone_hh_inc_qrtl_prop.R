@@ -1,22 +1,17 @@
 #===========
 #make_bzone_hh_inc_qrtl_prop.R
 #===========
+#===========
+# Description: 
+#     This script will create the make_bzone_hh_inc_qrtl_prop.csv file and save in the input subfolder
+#===========
 
-# This script will create the make_bzone_hh_inc_qrtl_prop.csv file for the inputs
-# The script will join the 2019 and 2045 data files
 
-# File paths
-proj_dir = '//vntscex/dfs/Projects/PROJ-HW32A1/Task 2.9 - SHRP/SHRP2 C10-C04-C05-C16/Implementation/VisionEval/VDOT_Case_Study/'
+source("Data Prep/config.R")
 
-input = file.path(proj_dir, 'Data_to_process')
-
-temp = file.path(getwd(), 'temp')
-if(!dir.exists(temp)){ dir.create(temp)}
-
-final = file.path(proj_dir, 'NVTA_Inputs_2020/inputs')
 
 # Install/Load libraries --------------
-source('data prep scripts/get_packages.R')
+source("Data Prep/get_packages.R")
 
 library(dplyr)
 library(tidyverse)
@@ -33,11 +28,12 @@ library(rlist)
 # add in census api key
 fileName <- 'census_api.txt'
 
-if(!file.exists(fileName)){
-  stop(paste('Census API Key needed in as a plain text file in /n', getwd(), '/n go to https://api.census.gov/data/key_signup.html /n and save the API key as `census_api.txt`'))
+# check if census_api.txt is in the working directory
+if(!file.exists(file.path(working_dir,fileName))){ 
+  stop(paste('Census API Key needed in as a plain text file in /n', file.path(working_dir), '/n go to https://api.census.gov/data/key_signup.html /n and save the API key as `census_api.txt`'))
 }
 
-mystring <- read_file(file.path(input, fileName))
+mystring <- read_file(file.path(working_dir, fileName))
 api_key <- gsub('/r/n', '', mystring) #clean up in case text file has breaks
 
 # load census api key (get one here: https://api.census.gov/data/key_signup.html)
@@ -45,14 +41,12 @@ census_api_key(api_key, install = TRUE)
 readRenviron("~/.Renviron") # will check R environment for past api keys
 
 # load census tract data
-counties <- c(059, 600, 610) #enter county codes here
-counties_geoids <- c(51059, 51600, 51610) #enter county codes with state code
 # HH income quartiles uses census table B19001
 # Full table found at this link: https://api.census.gov/data/2016/acs/acs5/groups/B19001.html
 
 # Download Census table
 hh_income_county <- get_acs(geography = "county", table = "B19001",
-                         state = "VA", geometry = FALSE) %>% filter(GEOID %in% counties_geoids)
+                         state = state, geometry = FALSE) %>% filter(GEOID %in% counties_geoids)
 
 
 var_list <- c("B19001_002", "B19001_003", "B19001_004", "B19001_005", "B19001_006", "B19001_007", 
@@ -151,7 +145,7 @@ for (geoid in counties_geoids){
  # print(percentile_50_number)
   
   hh_income_tract <- get_acs(geography = "tract", table = "B19001",
-                             state = "VA", county = substring(geoid, 3), geometry = FALSE)
+                             state =state, county = substring(geoid, 3), geometry = FALSE)
   
   tract_geoids <- unique(c(hh_income_tract$GEOID))
   
@@ -194,9 +188,8 @@ final_df <- final_df %>% mutate(
 
 
 
-counties <- c(059, 600, 610) #enter county codes here
 hh_income_raw <- get_acs(geography = "tract", table = "B19001",
-                            state = "VA", county = counties, geometry = TRUE) %>% 
+                            state = state, county = counties, geometry = TRUE) %>% 
                   filter(variable == "B19001_001") %>%
                   select(GEOID)
                     
@@ -205,30 +198,29 @@ hh_income_raw <- hh_income_raw %>% merge(final_df, by.x = "GEOID", by.y = 'tract
 
 #############################################
 
-# Clean tract and TAZ geometries --------------
-TAZ_geometry <- st_read(file.path(input, "FFXsubzone/FFX_Subzone.shp")) #load TAZ dataset
-TAZ_geometry_sp <- as(TAZ_geometry, Class = "Spatial")  #make TAZ df into sp 
+# Clean tract and bzone geometries --------------
+bzone_geometry_sp <- as(bzone_geometry, Class = "Spatial")  #make TAZ df into sp 
 hh_income_raw_sp = as_Spatial(hh_income_raw)
 
 #change all geometries to USGS project for continuity
 proj.USGS <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
-TAZ_geometry_sp_newproj <- spTransform(TAZ_geometry_sp, CRS = proj.USGS)
+bzone_geometry_sp_newproj <- spTransform(bzone_geometry_sp, CRS = proj.USGS)
 hh_income_raw_sp_newproj <- spTransform(hh_income_raw_sp, CRS = proj.USGS)
 
 
-# Find intersection between TAZ and Census Tract polygons --------------
+# Find intersection between bzone and Census Tract polygons --------------
 
 # create and clean up intersect object
-gI <- gIntersection(TAZ_geometry_sp_newproj, hh_income_raw_sp_newproj, byid=TRUE, drop_lower_td=TRUE) # gIntersection
+gI <- gIntersection(bzone_geometry_sp_newproj, hh_income_raw_sp_newproj, byid=TRUE, drop_lower_td=TRUE) # gIntersection
 n<-names(gI) #grab the ids/names from the gIntersection object
 n<-data.frame(t(data.frame(strsplit(n," ",fixed=TRUE)))) #ids are combined so split into separate cells
-colnames(n)[1:2]<-c("id_TAZ","id_tract") #add id names to differentiate
+colnames(n)[1:2]<-c("id_bzone","id_tract") #add id names to differentiate
 
 
-#find the overlapping area for all the TAZ-Tract objects
+#find the overlapping area for all the bzone-Tract objects
 n$area<-sapply(gI@polygons, function(x) x@area) 
-a<-data.frame(id=row.names(TAZ_geometry_sp_newproj), TAZ_N = TAZ_geometry_sp_newproj$TAZ_N)#subset TAZ dataset so only joining TAZ ids
-df<-merge(n,a,by.x = "id_TAZ", by.y = "id", all.x=TRUE) #merge the TAZ ids into our dataset
+a<-data.frame(id=row.names(bzone_geometry_sp_newproj), Bzone = bzone_geometry_sp_newproj$Bzone)#subset bzone dataset so only joining bzone ids
+df<-merge(n,a,by.x = "id_bzone", by.y = "id", all.x=TRUE) #merge the bzone ids into our dataset
 
 
 #find the total area of every census tract
@@ -237,25 +229,24 @@ df <- df %>%   group_by(id_tract)%>%
   right_join(df, by = "id_tract") 
 
 
-
 hh_income_raw$id_tract <- seq.int(nrow(hh_income_raw)) #make column so we can join census tract df with intersection df
 df2<- merge(df, hh_income_raw, by = "id_tract", by.y = "id_tract", all.x=TRUE)
 
 # Finalize dataframe -------------------------
-df3 <- df2 %>% mutate(share.area = area/shape_area, #calculate % of tract in each TAZ
+df3 <- df2 %>% mutate(share.area = area/shape_area, #calculate % of tract in each bzone
                       total_hh_list_this_area = total_hh_list * share.area,
                       percentile_q1_num_list_this_area = percentile_q1_num_list * share.area, # multiply to get SFDU/MFDU in each intersected polygon
                       percentile_q2_num_list_this_area = percentile_q2_num_list * share.area,
                       percentile_q3_num_list_this_area = percentile_q3_num_list * share.area,
                       percentile_q4_num_list_this_area = percentile_q4_num_list * share.area) %>% 
-  group_by(TAZ_N)%>%
+  group_by(Bzone)%>%
   summarise(n = n(),
             tot_hhs = sum(total_hh_list_this_area),
-            HhPropIncQ1 = sum(percentile_q1_num_list_this_area)/sum(total_hh_list_this_area), # add up tract-level SFDU/MFDUs for each TAZ 
+            HhPropIncQ1 = sum(percentile_q1_num_list_this_area)/sum(total_hh_list_this_area), # add up tract-level SFDU/MFDUs for each bzone 
             HhPropIncQ2 = sum(percentile_q2_num_list_this_area)/sum(total_hh_list_this_area),
             HhPropIncQ3 = sum(percentile_q3_num_list_this_area)/sum(total_hh_list_this_area),
             HhPropIncQ4 = sum(percentile_q4_num_list_this_area)/sum(total_hh_list_this_area)) %>%
-  mutate(Geo = TAZ_N,
+  mutate(Geo = Bzone,
          GQDU = 1) # no census variable for GQDU. Must use outside data source or assume as 1
 
 
@@ -265,12 +256,12 @@ identical(sum(df3$tot_hhs), sum(hh_income_raw$total_hh_list))
   
 #duplicate 2019 data for 2045    
 df3_copy <- df3
-df3$Year <- 2019
-df3_copy$Year <- 2045
+df3$Year <- years[1]
+df3_copy$Year <- years[2]
 
 #make final csv file and save to temp directory
 bzone_hh_income_quartiles_final <- rbind(df3, df3_copy) %>% select("Geo","Year",'HhPropIncQ1','HhPropIncQ2','HhPropIncQ3','HhPropIncQ4') 
-write.csv(bzone_hh_income_quartiles_final, file.path(final, 'bzone_hh_inc_qrtl_prop.csv'), row.names = FALSE) #save as csv in final directory
+write.csv(bzone_hh_income_quartiles_final, file.path(proj_dir, 'inputs/bzone_hh_inc_qrtl_prop.csv'), row.names = FALSE) #save as csv in final directory
 
 
 
@@ -280,24 +271,24 @@ write.csv(bzone_hh_income_quartiles_final, file.path(final, 'bzone_hh_inc_qrtl_p
 
 
 
-TAZ_geometry_reordered <- TAZ_geometry[order(TAZ_geometry$TAZ_N),]
-df3_geo <-st_set_geometry(df3, TAZ_geometry_reordered$geometry) 
+bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
+df3_geo <-st_set_geometry(df3, bzone_geometry_reordered$geometry) 
 
 #Compare proportion of households in 1st quartile
 plot(df3_geo['HhPropIncQ1'],
-     main = 'TAZ - Proportion of HHs in Lowest Income Quartile')
+     main = 'Bzone - Proportion of HHs in Lowest Income Quartile')
 plot(hh_income_raw['HhPropIncQ1'],
-     main = 'Tract - Proportion of HHs in Lowest Income Quartile')
+     main = 'Bzone - Proportion of HHs in Lowest Income Quartile')
 
 #Compare proportion of households in 4th quartile
 plot(df3_geo['HhPropIncQ4'],
-     main = 'TAZ - Proportion of HHs in Highest Income Quartile')
+     main = 'Bzone - Proportion of HHs in Highest Income Quartile')
 plot(hh_income_raw['HhPropIncQ4'],
-     main = 'Tract - Proportion of HHs in Highest Income Quartile')
+     main = 'Bzone - Proportion of HHs in Highest Income Quartile')
 
 
-TAZ_hh_income_raw_sp = as_Spatial(df3_geo)
-rgdal::writeOGR(obj = TAZ_hh_income_raw_sp,
-                dsn = temp,
+bzone_hh_income_raw_sp = as_Spatial(df3_geo)
+rgdal::writeOGR(obj = bzone_hh_income_raw_sp,
+                dsn = file.path(working_dir, "hh_inc_qrt_shapefile/"),
                 layer = 'TAZ_bzone_hh_inc_quartile',
                 driver = 'ESRI Shapefile')

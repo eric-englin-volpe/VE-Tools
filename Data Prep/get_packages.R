@@ -11,7 +11,8 @@ loadpacks <- c(
   'leaflet', 
   'readr', 
   'sp', 
-  'sf'
+  'sf',
+  'ggplot2'
   )
 
 for(i in loadpacks){

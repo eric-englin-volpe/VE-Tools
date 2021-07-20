@@ -1,16 +1,30 @@
-# Make marea_lane_miles.csv
+#===========
+#Make marea_lane_miles.R
+#===========
+#===========
+# Description: 
+#     This script will create the Make marea_lane_miles.csv input file and save in the input subfolder
+#     https://github.com/VisionEval/VisionEval/blob/master/sources/modules/VETransportSupply/inst/module_docs/AssignRoadMiles.md#marea_lane_milescsv
+#===========
 
-# https://github.com/VisionEval/VisionEval/blob/master/sources/modules/VETransportSupply/inst/module_docs/AssignRoadMiles.md#marea_lane_milescsv
 
+source("Data Prep/config.R")
+
+# Install/Load libraries --------------
+source("Data Prep/get_packages.R")
+
+library(dplyr)
+library(tidyverse)
+library(tidycensus)
+library(viridis)
+library(leaflet)
+library(readr)
 library(sp)
 library(sf)
+library(rgeos)
+library(rlist)
 library(ggplot2)
 # geo, year, FwyLaneMi, ArtLaneMi
-
-proj_dir = '//vntscex/dfs/Projects/PROJ-HW32A1/Task 2.9 - SHRP/SHRP2 C10-C04-C05-C16/Implementation/VisionEval/VDOT_Case_Study/NVTA_Inputs_2020'
-
-input = file.path(proj_dir, 'Data to Process')
-final = file.path(proj_dir, 'inputs')
 
 
 # Check to see if geo.csv exists; read marea from geo
@@ -20,7 +34,7 @@ geo_file = file.path(proj_dir, 'defs', 'geo.csv')
 if(file.exists(geo_file)){
   geo <- read.csv(geo_file)
 } else {
-  source('create_geo.R')
+  source('Data Prep/create_geo.R')
 }
 
 marea_name = unique(geo$Marea)
@@ -29,31 +43,18 @@ if(length(marea_name) > 1){
   stop('Only implemented for one Marea currently')
 }
 
-# Check to see run_parameters.json exists, and read in the years from that file 
-run_file = file.path(proj_dir, 'defs', 'run_parameters.json')
 
-if(file.exists(run_file)){
-  run_params <- jsonlite::fromJSON(run_file)
-} else {
-  stop('Create defs/run_parameters.json first.')
-}
+# Get HPMS shapefile and drop in working directory
+# files available at this location: https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles_2017.cfm
 
-years = run_params$Years
-
-# Get HPMS shapefile and drop in 'Data to Process'
-
-# Virginia_PR_2018
-# To do
-# vjs <- jsonlite::read_json(path = 'https://geo.dot.gov/server/rest/services/Hosted/Virginia_2018_PR/FeatureServer/layers?f=pjson')
 
 
 # Use 2017 layer
 # Downloaded from HPMS website
-state = 'virginia'
-year = '2017'
+year = 2017
 
 
-hpms_zip_file = file.path(proj_dir, 'Data to Process', 
+hpms_zip_file = file.path(working_dir,  
                           paste0(state, year, '.zip'))
 
 
@@ -61,7 +62,6 @@ if(!file.exists(hpms_zip_file)){
   stop(paste('Get the', state, year, 'file from https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles_2017.cfm'))
 }
 
-# unzip(hpms_zip_file) # manually unzipped, Windows unzip function doesn't work without specifying path to unzip utility
 
 rdata_file = paste0('HPMS_', state, '_', year, '.RData')
 
@@ -73,11 +73,9 @@ if(!file.exists(rdata_file)){
   load(rdata_file)
 }
 
-# Load bzones
-TAZ_geometry <- st_read(file.path(input, "FFXsubzone/FFX_Subzone.shp")) #load TAZ dataset
 
-# Merge
-marea_geometry <- st_union(TAZ_geometry)
+# Merge geometry with bzones
+marea_geometry <- st_union(bzone_geometry)
 
 
 #change all geometries to USGS project for continuity
@@ -144,10 +142,10 @@ ArtLaneMi = sum(lengths * lanes) * miles_per_meter
 
 # Write out ---
 
-lane_miles = data.frame(Geo = rep('NVTA', 2),
-                         Year = c('2019', '2045'),
+lane_miles = data.frame(Geo = rep(Marea, 2),
+                         Year = years,
                          FwyLaneMi = rep(round(as.numeric(FwyLaneMi), 0), 2),
                          ArtLaneMi= rep(round(as.numeric(ArtLaneMi), 0), 2))
 
-write.csv(lane_miles, file = file.path(final, 'marea_lane_miles.csv'),
+write.csv(lane_miles, file = file.path(proj_dir, 'inputs/marea_lane_miles.csv'),
           row.names = F)
