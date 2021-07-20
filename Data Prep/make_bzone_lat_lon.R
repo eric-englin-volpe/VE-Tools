@@ -4,6 +4,7 @@
 
 # This script will create the bzone_lat_lon.csv input file
 
+source("Data Prep/config.R")
 
 # File paths
 proj_dir = '//vntscex/dfs/Projects/PROJ-HW32A1/Task 2.9 - SHRP/SHRP2 C10-C04-C05-C16/Implementation/VisionEval/VDOT_Case_Study/'
