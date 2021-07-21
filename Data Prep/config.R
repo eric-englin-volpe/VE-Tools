@@ -1,6 +1,25 @@
-library(foreign)
+#===========
+#config.R
+#===========
+#===========
+# Description:
+#     This will create all of the reference variables for the rest of data prep scripts.
+#     Default values are provided but should be updated to user specifications.
+#===========
+
+# Install/Load libraries --------------
+source("Data Prep/get_packages.R")
+
+library(dplyr)
 library(tidyverse)
+library(tidycensus)
+library(viridis)
+library(leaflet)
+library(readr)
+library(sp)
 library(sf)
+library(rgeos)
+library(rlist)
 
 #set project directory folders
 proj_dir <- 'C:/Users/eric.englin/Desktop/VisionEval/VDOT/'
