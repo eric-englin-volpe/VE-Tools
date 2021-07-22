@@ -1,13 +1,16 @@
+# Launch from a VisionEval.Rproj file in an installed version of VisionEval
+
+
 library(tidyverse)
 library(tools)
 
+# User Input Requirements
 
-# User Input Requirements#
-
-## scenario_inputs_path: path where scenarios are stored i.e. B-V 
+# scenario_inputs_path: path where scenarios are stored i.e. B-V 
+# This uses the default VERSPM_Scenarios folder. To run using your own set of scenarios and replace this path with the name of your scenarios directory.
 scenario_inputs_path <- file.path("models","VERSPM_Scenarios","scenario_inputs");
 
-## base_model_path: path where base model is stored i.e. VERSPM_base_model
+# base_model_path: path where base model is stored i.e., VERSPM_base_model
 base_model_path <- file.path("models", "VERSPM_Scenarios", "VERSPM_base_model")
 
 
@@ -23,10 +26,10 @@ scenario_directories <- list.dirs(scenario_inputs_path,full.names = FALSE,
 modelNames <- vector()
 
 
-# Append base model to the list of models to be run
-modelNames <- rbind(modelNames, data.frame(name = "VERSPM_base_model",
+# Append base model to the list of models to be run. `files` is empty for the base model, because no files are changed. 
+modelNames <- rbind(modelNames, data.frame(name = basename(base_model_path),
                                            files = "",
-                                           location = file.path(ve.runtime,base_model_path),
+                                           location = file.path(ve.runtime, base_model_path),
                                            status = "Not Run"))
 
 

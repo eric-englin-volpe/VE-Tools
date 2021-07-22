@@ -21,33 +21,33 @@ Users should start by changing the initial settings in this text file. Other dat
 ## Model Run
 
 VisionEval can be used to run distinctive user defined combinations of scenarios as opposed to the full factorial combination.
-The following scripts when run with Vision Eval can be used with the VERSPM_Scenarios model provided in the initial repo.
+The following scripts when run with Vision Eval can be used with the `VERSPM_Scenarios` model provided in the as an example by default.
 
 ### Create_Single_Scenarios.R
 
 ###### <b> Description: </b>
-* Creates unique model run folders based on specified base model and swaps out distinct files for each run folder. All other files will remain the same as the base model. These run folders will be created in the VERSPM_Scenarios directory.
+* Creates unique model run folders based on specified base model and swaps out distinct files for each run folder. All other files will remain the same as the base model. These run folders will be created in the `VERSPM_Scenarios` directory.
 
 ###### <b> User Required Inputs: </b>
-* The user can alter the default base_model_path and scenario_inputs_path to specify where the base model to be used and 
+* The user can alter the default `base_model_path` and `scenario_inputs_path` to specify where the base model to be used and 
 files inputs for the scenarios can be found.
 
 ###### <b> Outputs: </b>
 * Generates 15 model run folders B2-V2
-* Generates Single_Scenarios_Status.csv in VERSPM_Scenarios directory which tracks model names, model path, modifed input files, and model run status.
+* Generates `Single_Scenarios_Status.csv` in `VERSPM_Scenarios` directory which tracks model names, model path, modified input files, and model run status.
 
 
 ### Run_Single_Scenarios.R
 
 ###### <b> Description: </b>
-* This script runs all the model folders including the base case created by the Create_Single_Scenarios.R script.
+* This script runs all the model folders including the base case created by the `Create_Single_Scenarios.R` script.
 
 ###### <b> User Required Inputs: </b>
-* Requires Create_Single_Scenarios.R script to be run for model folders and CSV information.
+* Requires `Create_Single_Scenarios.R` script to be run for model folders and CSV information.
 
 ###### <b> Outputs: </b>
 * Generates complete model runs for each scenario including the base case
-* Updates Single_Scenarios_Status.csv in VERSPM_Scenarios directory with model status
+* Updates `Single_Scenarios_Status.csv` in `VERSPM_Scenarios` directory with model status
 
 ### Extract_Single_Scenarios.R
 
@@ -62,12 +62,12 @@ files inputs for the scenarios can be found.
 * Generates Extracted_Metric_Units.csv in VERSPM_Scenarios detailing units for the model run
 * Generates Single_Scenarios_Metrics_Marea.csv in VERSPM_Scenarios with consolidated Marea stats
 * Generates Single_Scenarios_Metrics_Hh.csv in VERSPM_Scenarios with consolidated household stats
-* Generates Single_Scenarios_Complete.RData in vERSPM_Scenarios
+* Generates Single_Scenarios_Complete.RData in VERSPM_Scenarios
 
 ### Single_Scenarios_Results.Rmd
 
 ###### <b>Description: </b>
-* This R markdown file generates a summarized interactive report of the key statistics comparing the multiple model runs.
+* This RMarkdown file generates a summarized interactive report of the key statistics comparing the multiple model runs.
 
 ###### <b> User Required Inputs:</b>
 * User must specify where VisionEval is located

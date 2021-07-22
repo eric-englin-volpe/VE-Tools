@@ -4,13 +4,13 @@
 
 # read in csv which contains models to be run
 csvpath <- file.path(ve.runtime,"models","VERSPM_Scenarios","Single_Scenarios_Status.csv")
-data <- read.csv(csvpath)
+scenarios <- read.csv(csvpath)
 
 #Iterate through and run each model in the CSV
-for(i in 1:nrow(data)){
+for(i in 1:nrow(scenarios)){
   
-  name <- data[i, "name"]
-  modelpath <- data[i,"location"]
+  name <- scenarios[i, "name"]
+  modelpath <- scenarios[i,"location"]
   
   cat('Running', name, '\n\n')
   
@@ -18,10 +18,10 @@ for(i in 1:nrow(data)){
   model$run()
   
   # Update status when complete
-  data[i, 'status'] <- model$status
+  scenarios[i, 'status'] <- model$status
   
 }
 
 # Update all model status
-write.csv(data, csvpath, row.names = F)
+write.csv(scenarios, csvpath, row.names = F)
 
