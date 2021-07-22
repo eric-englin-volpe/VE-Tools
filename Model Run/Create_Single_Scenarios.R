@@ -22,6 +22,14 @@ scenario_directories <- list.dirs(scenario_inputs_path,full.names = FALSE,
 # Create a dataframe of scenario names
 modelNames <- vector()
 
+
+# Append base model to the list of models to be run
+modelNames <- rbind(modelNames, data.frame(name = "VERSPM_base_model",
+                                           files = "",
+                                           location = file.path(ve.runtime,base_model_path),
+                                           status = "Not Run"))
+
+
 for (scenario in scenario_directories){
   cat('Preparing Scenario', scenario, '\n\n')
   scenario_path <- file.path(scenario_inputs_path,scenario)
@@ -79,6 +87,8 @@ for (scenario in scenario_directories){
   
   
   # Write records to Single_Scenarios_Status.csv file
+  
+  
   
   write.csv(modelNames, file.path(ve.runtime, 'models', 'VERSPM_Scenarios','Single_Scenarios_Status.csv'), row.names = F)
 }

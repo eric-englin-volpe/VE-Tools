@@ -1,11 +1,15 @@
-# Extract metrics from all run models in ScenarioStatus.csv and save the results
+# Extract metrics from all run models in Single_Scenario_Status.csv and save the results
 library(dplyr)
+
+# User Input
+### Input future year as string
+futureyear <- '2038'
 
 
 #define function to extract metrics from each scenario folder
-extract_scenario_metrics <- function(modelName, Year = '2045'){
+extract_scenario_metrics <- function(modelName, modelPath, Year = futureyear){
   # Will return an error if the model doesn't exist yet
-  mod <- openModel(modelName) 
+  mod <- openModel(modelPath) 
   
   # Set groups to only the future year
   mod$groups <- Year
@@ -71,6 +75,8 @@ extract_scenario_metrics <- function(modelName, Year = '2045'){
   
   hh_results <- mod$extract(saveTo = F, quiet = T)
   
+  # i switched it out for model path - how do i get the correct modelName from path
+  
   # Save output as a list of two data frames: Marea and Household level
   results = list(Marea = data.frame(modelName, marea_results[[1]]),
                  Hh = data.frame(modelName, hh_results[[1]]))
@@ -81,32 +87,35 @@ extract_scenario_metrics <- function(modelName, Year = '2045'){
 #### Looping through the run scenarios to extract the information
 
 # read in csv 
-csvpath <- file.path(ve.runtime, "models", "Scenario_Status.csv")
+csvpath <- file.path(ve.runtime,"models","VERSPM_Scenarios","Single_Scenarios_Status.csv")
 models <- read.csv(csvpath)
+
 
 marea_compiled <- vector()
 hh_compiled <- vector()
 
 
-# go through models in csv and run extract script on each
-# compile information in household and marea csv
+# Iterate through models in CSV by using the location field to run the model
+# Extract and compile information to Marea and Household Level CSV file
 for(i in 1:nrow(models)){
-  # i = 1
-  name <- models[i,"name"]
-  cat("\n\n Extracting statistics from", name, '\n')
-  results_2045 <- extract_scenario_metrics(name)
   
-  marea <- results_2045[[1]] # Marea
-  hh    <- results_2045[[2]] # Household
+  # i = 1 is VERSPM_base_model
+  modelname <- models[i,"name"]
+  cat("\n\n Extracting statistics from", name, '\n')
+  modelpath <- models[i,"location"]
+  results_future <- extract_scenario_metrics(modelname, modelpath, futureyear)
+  
+  marea <- results_future[[1]] # Marea
+  hh    <- results_future[[2]] # Household
   
   marea_compiled <- rbind(marea_compiled, marea)
   hh_compiled <- rbind(hh_compiled, hh)
   
 }
 
-write.csv(marea_compiled, file.path(ve.runtime, 'models', 'Scenario_Metrics_Marea.csv'),
+write.csv(marea_compiled, file.path(ve.runtime, 'models', "VERSPM_Scenarios", 'Single_Scenarios_Metrics_Marea.csv'),
           row.names = F)
-write.csv(hh_compiled,  file.path(ve.runtime, 'models', 'Scenario_Metrics_Hh.csv'),
+write.csv(hh_compiled,  file.path(ve.runtime, 'models', "VERSPM_Scenarios", 'Single_Scenarios_Metrics_Hh.csv'),
           row.names = F)
 
 View(marea_compiled)
@@ -146,12 +155,12 @@ metric_units <- atts %>%
   filter(TABLE %in% c('Marea', 'Household')) %>%
   select(MODULE, NAME, TABLE, TYPE, UNITS, DESCRIPTION)
 
-write.csv(metric_units, file.path(ve.runtime, "models", "Extracted_Metric_Units.csv"),
+write.csv(metric_units, file.path(ve.runtime, "models", "VERSPM_Scenarios","Extracted_Metric_Units.csv"),
           row.names = F)
 
 # Save as RData
 
-save(file = 'models/VDOT_Scenarios_Complete.RData',
+save(file = 'models/VERSPM_Scenarios/Single_Scenarios_Complete.RData',
      list = c('metric_units',
               'hh_compiled',
               'marea_compiled',
