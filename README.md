@@ -20,28 +20,64 @@ Users should start by changing the initial settings in this text file. Other dat
 
 ## Model Run
 
-For the NVTA case study, different scenarios were created and run by modifying the base VERSPM model.
-The key scripts developed and used are as follows:
+VisionEval can be used to run distinctive user defined combinations of scenarios as opposed to the full factorial combination.
+The following scripts when run with Vision Eval can be used with the VERSPM_Scenarios model provided in the initial repo.
 
-- Create_NVTA_Model_Scenarios_All.R
+### Create_Single_Scenarios.R
 
-Constructs model run folders based on base level scenario. The script copies the base level model and inserts the user
-changed files into each respective scenario folder. Details about each constructed scenario is saved to 
-the Scenario Status CSV including files modified and model run status.
+###### <b> Description: </b>
+* Creates unique model run folders based on specified base model and swaps out distinct files for each run folder. All other files will remain the same as the base model. These run folders will be created in the VERSPM_Scenarios directory.
 
-In this implementation, /models directory contained a folder with folder for each scenario. Each scenario folder
-contained a folder for a different iteration of the same scenario. The individual iteration folder contained the
-user changed files to be swapped into the base model. All other files not included remained the same.
+###### <b> User Required Inputs: </b>
+* The user can alter the default base_model_path and scenario_inputs_path to specify where the base model to be used and 
+files inputs for the scenarios can be found.
 
-
-- Run_NVTA_Model_Scenarios_All.R
-
-Runs the models created by the Create_NVTA_Model_Scenarios_All.R script. Updates Scenario Status CSV after model are
-completed running. May take a while to complete running all models.
+###### <b> Outputs: </b>
+* Generates 15 model run folders B2-V2
+* Generates Single_Scenarios_Status.csv in VERSPM_Scenarios directory which tracks model names, model path, modifed input files, and model run status.
 
 
-- Extract_Scenario_Metrics_All.R
+### Run_Single_Scenarios.R
 
-Extracts metrics from each completed scenario by calling extract scenario metrics on each model run folder. The
-output is stored in two files - one at the household level and one at the marea level. The script compiles
-all results from the various scenarios into these two files.
+###### <b> Description: </b>
+* This script runs all the model folders including the base case created by the Create_Single_Scenarios.R script.
+
+###### <b> User Required Inputs: </b>
+* Requires Create_Single_Scenarios.R script to be run for model folders and CSV information.
+
+###### <b> Outputs: </b>
+* Generates complete model runs for each scenario including the base case
+* Updates Single_Scenarios_Status.csv in VERSPM_Scenarios directory with model status
+
+### Extract_Single_Scenarios.R
+
+###### <b> Description: </b>
+* This script extracts key metrics from each of the run models and compiles the data into a household and marea file.
+
+###### <b> User Required Inputs: </b>
+* User can change/specify future year which is being explored in scenario.
+* Expects models to be run with prior run script above
+
+###### <b> Outputs: </b>
+* Generates Extracted_Metric_Units.csv in VERSPM_Scenarios detailing units for the model run
+* Generates Single_Scenarios_Metrics_Marea.csv in VERSPM_Scenarios with consolidated Marea stats
+* Generates Single_Scenarios_Metrics_Hh.csv in VERSPM_Scenarios with consolidated household stats
+* Generates Single_Scenarios_Complete.RData in vERSPM_Scenarios
+
+### Single_Scenarios_Results.Rmd
+
+###### <b>Description: </b>
+* This R markdown file generates a summarized interactive report of the key statistics comparing the multiple model runs.
+
+###### <b> User Required Inputs:</b>
+* User must specify where VisionEval is located
+* User must place the Single_Scenarios_Overview_Template.xlsx from this repository into the VERSPM_Scenarios directory
+
+
+###### <b> Outputs:</b>
+* Generates HTML summarized report for viewing the results
+* Generates figures of key findings found in Single_Scenarios_Figures directory in VERSPM_Scenarios
+
+
+
+
