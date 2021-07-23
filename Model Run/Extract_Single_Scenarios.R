@@ -6,7 +6,11 @@ library(dplyr)
 futureyear <- '2038'
 
 
-#define function to extract metrics from each scenario folder
+# define function to extract metrics from each scenario folder
+# Note that this has been set up to extract particular metrics from just the Marea and Households files, which was used in 
+# an application for one particular project.
+# Extensive customization is possible.
+
 extract_scenario_metrics <- function(modelName, modelPath, Year = futureyear){
   # Will return an error if the model doesn't exist yet
   mod <- openModel(modelPath) 
@@ -87,22 +91,22 @@ extract_scenario_metrics <- function(modelName, modelPath, Year = futureyear){
 #### Looping through the run scenarios to extract the information
 
 # read in csv 
-csvpath <- file.path(ve.runtime,"models","VERSPM_Scenarios","Single_Scenarios_Status.csv")
-models <- read.csv(csvpath)
-
+csvpath <- file.path(ve.runtime, "models", "VERSPM_Scenarios", "Single_Scenarios_Status.csv")
+scenarios <- read.csv(csvpath)
+# View(scenarios) # in RStudio, allows viewing of the data frame after read in to R
 
 marea_compiled <- vector()
 hh_compiled <- vector()
 
 
-# Iterate through models in CSV by using the location field to run the model
+# Iterate through model scenarios in CSV by using the location field to run the model
 # Extract and compile information to Marea and Household Level CSV file
-for(i in 1:nrow(models)){
+for(i in 1:nrow(scenarios)){
   
   # i = 1 is VERSPM_base_model
-  modelname <- models[i,"name"]
-  cat("\n\n Extracting statistics from", name, '\n')
-  modelpath <- models[i,"location"]
+  modelname <- scenarios[i,"name"]
+  cat("\n\n Extracting metrics from", modelname, '\n')
+  modelpath <- scenarios[i,"location"]
   results_future <- extract_scenario_metrics(modelname, modelpath, futureyear)
   
   marea <- results_future[[1]] # Marea
@@ -128,7 +132,7 @@ View(hh_compiled)
 # This listing is maintained internally and contains the definitive list of what is in the
 # Datastore.
 # Use the first model for getting units
-use_model_path = models[1, 'location']
+use_model_path = scenarios[1, 'location']
 
 dfls <- get(load(file.path(use_model_path, "Datastore", "DatastoreListing.Rda")))
 
@@ -158,11 +162,11 @@ metric_units <- atts %>%
 write.csv(metric_units, file.path(ve.runtime, "models", "VERSPM_Scenarios","Extracted_Metric_Units.csv"),
           row.names = F)
 
-# Save as RData
+# Save as RData for faster loading in R (compared to loading individual .csv files)
 
 save(file = 'models/VERSPM_Scenarios/Single_Scenarios_Complete.RData',
      list = c('metric_units',
               'hh_compiled',
               'marea_compiled',
-              'models',
+              'scenarios',
               'atts'))

@@ -4,21 +4,20 @@
 1. <b>Data Prep</b>: This folder contains files and scripts that help with the data preparation. 
 2. <b>Model Run</b>: This folder will support running the VERSPM module. 
 
-## Data Prep
+# Data Prep
 
 ### [VERSPM File Summary Tracker.xlsx](https://github.com/eric-englin-volpe/VE-Tools/raw/main/Data%20Prep/VERSPM%20File%20Summary%20Tracker.xlsx)
 
-This excel file has information on all 68 input files needed to run VisionEval. It also contains information on the run order and specific module that each input is used by. 
+This Excel file has information on all 68 input files which can be used by VE-RSPM (not all files are mandatory). It also contains information on the run order and specific module that each input is used by. 
 
-Typically, this excel is used while preparing the input files and shared across a team that is working together to compile all files. The file contains a status folder thata can be used to track this progress. 
+Typically, this Excel file is used while preparing the input files and shared across a team that is working together to compile all files. The file contains a status folder that can be used to track this progress. 
 
 ### Config.txt
 
 Users should start by changing the initial settings in this text file. Other data prep scripts will reference the variables and file locations in this text file. 
 
 
-
-## Model Run
+# Model Run
 
 VisionEval can be used to run distinctive user defined combinations of scenarios as opposed to the full factorial combination.
 The following scripts when run with Vision Eval can be used with the `VERSPM_Scenarios` model provided in the as an example by default.
@@ -59,10 +58,10 @@ files inputs for the scenarios can be found.
 * Expects models to be run with prior run script above
 
 ###### <b> Outputs: </b>
-* Generates Extracted_Metric_Units.csv in VERSPM_Scenarios detailing units for the model run
-* Generates Single_Scenarios_Metrics_Marea.csv in VERSPM_Scenarios with consolidated Marea stats
-* Generates Single_Scenarios_Metrics_Hh.csv in VERSPM_Scenarios with consolidated household stats
-* Generates Single_Scenarios_Complete.RData in VERSPM_Scenarios
+* Generates `Extracted_Metric_Units.csv` in `VERSPM_Scenarios` detailing units for the model run
+* Generates `Single_Scenarios_Metrics_Marea.csv` in `VERSPM_Scenarios` with consolidated Marea stats
+* Generates `Single_Scenarios_Metrics_Hh.csv` in `VERSPM_Scenarios` with consolidated household stats
+* Generates `Single_Scenarios_Complete.RData` in `VERSPM_Scenarios`
 
 ### Single_Scenarios_Results.Rmd
 

@@ -1,5 +1,5 @@
 ---
-title: "VisionEval Single Scenarios Results"
+title: "VE-RSPM Single Scenarios Results"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -19,7 +19,7 @@ output:
 
 # Metropolitan Data Visualization 
 
-The Volpe team started by looking at the daily VMT for all scenarios. This is done by combining seven DVMT outputs by location and type of mode. Percent change is calculated relative to the base scenario value.
+Visualize daily VMT for all scenarios. This is done by combining seven DVMT outputs by location and type of mode. Percent change is calculated relative to the base scenario value.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = F, warning = F)
@@ -27,15 +27,12 @@ knitr::opts_chunk$set(echo = FALSE, message = F, warning = F)
 # This sections sets the location of the VisionEval installation for each of the Volpe team members.
 # The result is that the object `ve.runtime` is the full path to where VisionEval is installed, and the results from the single scenarios runs are located. 
 
-# Need Dan's assistance with this
-ve.runtime <- ifelse(grepl('Flynn', normalizePath('~/')), 
-                     file.path(dirname('~/'), 'Desktop/VE_4-1-0/'),
-                      ifelse(grepl('lohmar', normalizePath('~/')), 
-                       'C:/VisionEval',
-                         ifelse(grepl('englin', normalizePath('~/')), 
-                         file.path('C:/Users/eric.englin/Desktop/VisionEval/4_04_v3/'),
-                          NA)))
+ve.runtime <- file.path(dirname('~/'), 'Desktop', 'VE_Tool_Test')
 
+if(!dir.exists(ve.runtime)){
+  stop('Please specify `ve.runtime` path in the setup chunk of code. \n This will be the path to your installed version of VisionEval')
+}
+  
 # Make a directory to save JPEG outputs as well
 fig_save = file.path(ve.runtime, 'models', 'VERSPM_Scenarios', 'Single_Scenarios_Figures')
 if(!dir.exists(fig_save)) { dir.create(fig_save) }
@@ -45,6 +42,14 @@ knitr::opts_knit$set(root.dir = ve.runtime)
 library(tidyverse)
 library(plotly) #install.packages('plotly')
 library(DT) # install.packages('DT')
+
+overview_file = file.path(ve.runtime, 
+                          'models', 'VERSPM_Scenarios',
+                          'Single_Scenarios_Overview_Template.xlsx')
+
+if(!file.exists(overview_file)){
+  stop('Please copy over the file `Single_Scenarios_Overview_Template.xlsx` to your VisionEval directory, \n and place it in the `models/VERSPM_Scenarios` location')
+}
 
 # Read in scenario descriptions
 scenario_desc <- readxl::read_excel(file.path(ve.runtime,
