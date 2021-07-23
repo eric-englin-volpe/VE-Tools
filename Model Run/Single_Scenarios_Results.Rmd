@@ -27,7 +27,10 @@ knitr::opts_chunk$set(echo = FALSE, message = F, warning = F)
 # This sections sets the location of the VisionEval installation for each of the Volpe team members.
 # The result is that the object `ve.runtime` is the full path to where VisionEval is installed, and the results from the single scenarios runs are located. 
 
-ve.runtime <- file.path(dirname('~/'), 'Desktop', 'VE_Tool_Test')
+current_file_directory <- dirname(rstudioapi::getActiveDocumentContext()$path)
+ve.runtime <- dirname((dirname(current_file_directory)))
+
+#ve.runtime <- file.path(dirname('~/'), 'Desktop', 'VE_Tool_Test')
 
 if(!dir.exists(ve.runtime)){
   stop('Please specify `ve.runtime` path in the setup chunk of code. \n This will be the path to your installed version of VisionEval')

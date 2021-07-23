@@ -1,5 +1,7 @@
 # VE-Tools
 
+This tool are designed to be used with the downloadable version of VisionEval. To use, download the VE-Tools folder and place into the /tools folder of your local copy of VisionEval.
+
 ## Folders:
 1. <b>Data Prep</b>: This folder contains files and scripts that help with the data preparation. 
 2. <b>Model Run</b>: This folder will support running the VERSPM module. 
