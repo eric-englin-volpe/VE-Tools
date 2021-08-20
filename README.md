@@ -10,14 +10,24 @@ This tool are designed to be used with the downloadable version of VisionEval. T
 
 ### [VERSPM File Summary Tracker.xlsx](https://github.com/eric-englin-volpe/VE-Tools/raw/main/Data%20Prep/VERSPM%20File%20Summary%20Tracker.xlsx)
 
-This Excel file has information on all 68 input files which can be used by VE-RSPM (not all files are mandatory). It also contains information on the run order and specific module that each input is used by. 
+This Excel file has information on all 68 input files which can be used by VE-RSPM (not all files are mandatory). It also contains information on the run order and specific module that each input is used by. There is an additional column, "Included in VE Tools Data Prep?" that will have the specific Data Prep file that will create and save each particular input. 
 
 Typically, this Excel file is used while preparing the input files and shared across a team that is working together to compile all files. The file contains a status folder that can be used to track this progress. 
 
-### Config.txt
+### Config.R
 
-Users should start by changing the initial settings in this text file. Other data prep scripts will reference the variables and file locations in this text file. 
+Users should start by changing the initial settings in this text file. Other data prep scripts will reference the variables and file locations in this text file. These main variables include: directory paths, base and future years, names and geometries for metro area, bzones, and azones, and Census county codes. 
 
+**Note:** At this time, the prep files are written for bzones using TAZs. If a user has their own geometric shapefile for the bzones then this may be substituted in with no issues. Future versions of this tool will allow for using Census block groups as a default bzone option as well. 
+
+### Other Data Prep Files
+
+The fully developed data prep files are as follows: 
+- Make_bzone_dwelling_units.R
+- Make_bzone_hh_inc_qrtl_prop.R
+- Make_bzone_lat_lon.R
+- Make_marea_lane_miles.R
+- Make_placetypes_USA.R
 
 # Model Run
 
