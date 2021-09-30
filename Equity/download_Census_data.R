@@ -198,37 +198,55 @@ df3 <- df2 %>% mutate(share.area = area/shape_area, #calculate % of tract in eac
             hhs_75older = sum(hhs_75older_this_area),
             hhs_below150poverty = sum(hhs_below150poverty_this_area),
             hhs_NonEnglish = sum(hhs_NonEnglish_this_area)) %>%
-  mutate(Geo = Bzone) 
+  mutate(Geo = Bzone,
+         low_income = hhs_below150poverty/hhs_total,
+         hispanic = hhs_hispanic/hhs_total,
+         racial_minority = (hhs_total-hhs_white)/hhs_total,
+         age75older = hhs_75older/hhs_total,
+         nonEnglish = hhs_NonEnglish/hhs_total,
+         disability = hhs_disability/hhs_total,
+         
+         low_income_index = low_income/mean(df3$low_income), # calculate indexes for each variable
+         hispanic_index = hispanic/mean(df3$hispanic),
+         racial_minority_index = racial_minority/mean(df3$racial_minority),
+         age75older_index = age75older/mean(df3$age75older),
+         nonEnglish_index = nonEnglish/mean(df3$nonEnglish),
+         disability_index = disability/mean(df3$disability)
+  ) 
+
+vtrans_final_table <- df3 %>% select(Bzone,hispanic_index,low_income_index,racial_minority_index,age75older_index,nonEnglish_index,disability_index)
+vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index>3,3,vtrans_final_table$low_income_index)
+vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index<1,0,vtrans_final_table$low_income_index)
+vtrans_final_table$hispanic_index <- ifelse(vtrans_final_table$hispanic_index>3,3,vtrans_final_table$hispanic_index)
+vtrans_final_table$hispanic_index <- ifelse(vtrans_final_table$hispanic_index<1.5,0,vtrans_final_table$hispanic_index)
+vtrans_final_table$racial_minority_index <- ifelse(vtrans_final_table$racial_minority_index>3,3,vtrans_final_table$racial_minority_index)
+vtrans_final_table$racial_minority_index <- ifelse(vtrans_final_table$racial_minority_index<1.5,0,vtrans_final_table$racial_minority_index)
+vtrans_final_table$age75older_index <- ifelse(vtrans_final_table$age75older_index>3,3,vtrans_final_table$age75older_index)
+vtrans_final_table$age75older_index <- ifelse(vtrans_final_table$age75older_index<1.5,0,vtrans_final_table$age75older_index)
+vtrans_final_table$nonEnglish_index <- ifelse(vtrans_final_table$nonEnglish_index>3,3,vtrans_final_table$nonEnglish_index)
+vtrans_final_table$nonEnglish_index <- ifelse(vtrans_final_table$nonEnglish_index<1.5,0,vtrans_final_table$nonEnglish_index)
+vtrans_final_table$disability_index <- ifelse(vtrans_final_table$disability_index>3,3,vtrans_final_table$disability_index)
+vtrans_final_table$disability_index <- ifelse(vtrans_final_table$disability_index<1.5,0,vtrans_final_table$disability_index)
+
+vtrans_final_table <- vtrans_final_table %>% 
+  mutate(index = low_income_index+hispanic_index+racial_minority_index+age75older_index+nonEnglish_index)
+
+vtrans_final_table$EEA <- ifelse(vtrans_final_table$index>2,
+                                 ifelse(vtrans_final_table$low_income_index >1 | vtrans_final_table$disability_index>1,1,0),0)
 
 
-hhs_disability
-hhs_NonEnglish
-hhs_75older
-hhs_below150poverty
-
-# quality check that total households are same in TAZ and census tract files
-identical(sum(df3$tot_hhs), sum(hh_income_raw$total_hh_list)) 
 
 
 
 
 
+##################################################################################
+#### add-on script to save shapefiles, make plots for final output ###############
 
 
+bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
+vtrans_final_table_geo <-st_set_geometry(vtrans_final_table, bzone_geometry_reordered$geometry) 
 
-
-
-
-census_table_pull <- get_acs(geography = "tract", table = 'B18101',
-                             state = state, county = c('059','600', '610'), geometry = FALSE) 
-
-census_table_pull2 <- get_acs(geography = "block group", table = 'B01001A',
-                             state = state, county = c( '610'), geometry = FALSE) 
-
-# Vtrans method:
-#       -Find # residents whose income below 150% of poverty level
-#       -Find # residents 75 or older
-#       -Find # residents who belong to racial minority (non-white)
-#       -Find # residents who are Hispanic/Latino
-#       -Find # residents who do not speak English "very well"
+plot(vtrans_final_table_geo['EEA'],
+     main = 'Bzone - Equity Emphasis Areas')
 
