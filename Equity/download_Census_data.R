@@ -38,8 +38,8 @@ mystring <- read_file(file.path(working_dir, fileName))
 api_key <- gsub('/r/n', '', mystring) #clean up in case text file has breaks
 
 # load census api key (get one here: https://api.census.gov/data/key_signup.html)
-census_api_key(api_key, install = TRUE)
-readRenviron("~/.Renviron") # will check R environment for past api keys
+try(census_api_key(api_key, install = TRUE))
+try(readRenviron("~/.Renviron")) # will check R environment for past api keys
 
 
 # Pull Major Census Data --------------
@@ -76,11 +76,12 @@ pull_census_data <- function(state, counties, table, var_list){
   return(census_table_df)
 }
 
+
 var_list <- c("B06012_001", "B06012_002", "B06012_003", "B06012_004")
 poverty_census <- pull_census_data(state, counties, "B06012", var_list)
 
 
-var_list <- c("B01001_023", "B01001_024", "B01001_025", 
+var_list <- c("B01001_001","B01001_023", "B01001_024", "B01001_025", 
               "B01001_047", "B01001_048", "B01001_049")
 older_age_census <- pull_census_data(state, counties, "B01001", var_list)
 
@@ -110,56 +111,32 @@ full_census_table <- poverty_census %>%
   merge(english_speaking_census, by = c("GEOID","NAME")) %>%
   merge(disability_census, by = c("GEOID","NAME")) 
 
-
-# Vtrans requirements --------------
-
-# Source: https://icfbiometrics.blob.core.windows.net/vtrans/assets/docs/2020_VTrans_Mid-term_Needs_DRAFT_Technical_Guide.pdf
-#     income: B19001
-#     age: B01001
-#     race: B02001
-#     ethnicity (Hispanic or Latino): B03001
-#     English proficiency: B06007
-#     disability: B18101_001E
-#     total population: B00001
-
-
-vtrans_census_table_tract <- full_census_table %>% 
-  mutate(
-    hhs_below150poverty = B06012_002 +B06012_003,
-    hhs_75older = B01001_023+B01001_024+B01001_025+B01001_047+B01001_048+B01001_049,
-    hhs_NonEnglish = B06007_005+B06007_008,
-    hhs_disability = B18101_004+B18101_007+B18101_010+B18101_013+B18101_016+B18101_019+B18101_023+B18101_026+B18101_029+B18101_032+B18101_035+B18101_038,
-    hhs_white = B02001_002,
-    hhs_hispanic = B03001_003,
-    hhs_total = B06012_001
-    ) %>%
-  select("GEOID","NAME",hhs_total,hhs_hispanic,hhs_white,hhs_disability,hhs_NonEnglish,hhs_75older,hhs_below150poverty)
-  
-
+#Pull geometry
 tract_table_geo <- get_acs(geography = "tract", table = "B19001",
-                         state = state, county = counties, geometry = TRUE) %>% 
+                           state = state, county = counties, geometry = TRUE) %>% 
   filter(variable == "B19001_001") %>%
   select(GEOID)
 
-vtrans_census_table_tract_geo <- tract_table_geo %>% merge(vtrans_census_table_tract, by= "GEOID") 
+#Add geometry to our vtrans table
+full_census_table_tract_geo <- tract_table_geo %>% merge(full_census_table, by= "GEOID") 
 
 
 #############################################
 
 # Clean tract and bzone geometries --------------
 bzone_geometry_sp <- as(bzone_geometry, Class = "Spatial")  #make TAZ df into sp 
-vtrans_census_table_tract_geo_sp = as_Spatial(vtrans_census_table_tract_geo)
+full_census_table_tract_geo_sp = as_Spatial(full_census_table_tract_geo)
 
 #change all geometries to USGS project for continuity
 proj.USGS <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
 bzone_geometry_sp_newproj <- spTransform(bzone_geometry_sp, CRS = proj.USGS)
-vtrans_census_table_tract_geo_sp_newproj <- spTransform(vtrans_census_table_tract_geo_sp, CRS = proj.USGS)
+full_census_table_tract_geo_sp_newproj <- spTransform(full_census_table_tract_geo_sp, CRS = proj.USGS)
 
 
 # Find intersection between bzone and Census Tract polygons --------------
 
 # create and clean up intersect object
-gI <- gIntersection(bzone_geometry_sp_newproj, vtrans_census_table_tract_geo_sp_newproj, byid=TRUE, drop_lower_td=TRUE) # gIntersection
+gI <- gIntersection(bzone_geometry_sp_newproj, full_census_table_tract_geo_sp_newproj, byid=TRUE, drop_lower_td=TRUE) # gIntersection
 n<-names(gI) #grab the ids/names from the gIntersection object
 n<-data.frame(t(data.frame(strsplit(n," ",fixed=TRUE)))) #ids are combined so split into separate cells
 colnames(n)[1:2]<-c("id_bzone","id_tract") #add id names to differentiate
@@ -177,76 +154,84 @@ df <- df %>%   group_by(id_tract)%>%
   right_join(df, by = "id_tract") 
 
 
-vtrans_census_table_tract$id_tract <- seq.int(nrow(vtrans_census_table_tract)) #make column so we can join census tract df with intersection df
-df2<- merge(df, vtrans_census_table_tract, by = "id_tract", by.y = "id_tract", all.x=TRUE)
+full_census_table$id_tract <- seq.int(nrow(full_census_table)) #make column so we can join census tract df with intersection df
+df2<- merge(df, full_census_table, by = "id_tract", by.y = "id_tract", all.x=TRUE)
 
 # Finalize dataframe -------------------------
-df3 <- df2 %>% mutate(share.area = area/shape_area, #calculate % of tract in each bzone
-                      hhs_total_this_area = hhs_total * share.area,
-                      hhs_hispanic_this_area = hhs_hispanic * share.area, # multiply to get value in each intersected polygon
-                      hhs_white_this_area = hhs_white * share.area,
-                      hhs_disability_this_area = hhs_disability * share.area,
-                      hhs_75older_this_area = hhs_75older * share.area,
-                      hhs_below150poverty_this_area = hhs_below150poverty * share.area,
-                      hhs_NonEnglish_this_area = hhs_NonEnglish * share.area) %>% 
+full_census_table_TAZ <- df2 %>% mutate(share.area = area/shape_area, #calculate % of tract in each bzone
+                      B06012_004_this_area = B06012_004 * share.area,
+                      B06012_003_this_area = B06012_003 * share.area, # multiply to get value in each intersected polygon
+                      B06012_002_this_area = B06012_002 * share.area,
+                      B06012_001_this_area = B06012_001 * share.area,
+                      B01001_049_this_area = B01001_049 * share.area,
+                      B01001_048_this_area = B01001_048 * share.area,
+                      B01001_047_this_area = B01001_047 * share.area,
+                      B01001_025_this_area = B01001_025 * share.area,
+                      B01001_024_this_area = B01001_024 * share.area,
+                      B01001_023_this_area = B01001_023 * share.area,
+                      B01001_001_this_area = B01001_001 * share.area,
+                      B02001_008_this_area = B02001_008 * share.area,
+                      B02001_007_this_area = B02001_007 * share.area,
+                      B02001_006_this_area = B02001_006 * share.area,
+                      B02001_005_this_area = B02001_005 * share.area,
+                      B02001_004_this_area = B02001_004 * share.area,
+                      B02001_003_this_area = B02001_003 * share.area,
+                      B02001_002_this_area = B02001_002 * share.area,
+                      B03001_003_this_area = B03001_003 * share.area,
+                      B06007_008_this_area = B06007_008 * share.area,
+                      B06007_005_this_area = B06007_005 * share.area,
+                      B06007_001_this_area = B06007_001 * share.area,
+                      B18101_038_this_area = B18101_038 * share.area,
+                      B18101_035_this_area = B18101_035 * share.area,
+                      B18101_032_this_area = B18101_032 * share.area,
+                      B18101_029_this_area = B18101_029 * share.area,
+                      B18101_026_this_area = B18101_026 * share.area,
+                      B18101_023_this_area = B18101_023 * share.area,
+                      B18101_019_this_area = B18101_019 * share.area,
+                      B18101_016_this_area = B18101_016 * share.area,
+                      B18101_013_this_area = B18101_013 * share.area,
+                      B18101_010_this_area = B18101_010 * share.area,
+                      B18101_007_this_area = B18101_007 * share.area,
+                      B18101_004_this_area = B18101_004 * share.area,
+                      B18101_001_this_area = B18101_001 * share.area
+                      ) %>% 
   group_by(Bzone)%>%
   summarise(n = n(),
-            hhs_total = sum(hhs_total_this_area),
-            hhs_hispanic = sum(hhs_hispanic_this_area), 
-            hhs_white = sum(hhs_white_this_area),
-            hhs_disability = sum(hhs_disability_this_area),
-            hhs_75older = sum(hhs_75older_this_area),
-            hhs_below150poverty = sum(hhs_below150poverty_this_area),
-            hhs_NonEnglish = sum(hhs_NonEnglish_this_area)) %>%
-  mutate(Geo = Bzone,
-         low_income = hhs_below150poverty/hhs_total,
-         hispanic = hhs_hispanic/hhs_total,
-         racial_minority = (hhs_total-hhs_white)/hhs_total,
-         age75older = hhs_75older/hhs_total,
-         nonEnglish = hhs_NonEnglish/hhs_total,
-         disability = hhs_disability/hhs_total,
-         
-         low_income_index = low_income/mean(df3$low_income), # calculate indexes for each variable
-         hispanic_index = hispanic/mean(df3$hispanic),
-         racial_minority_index = racial_minority/mean(df3$racial_minority),
-         age75older_index = age75older/mean(df3$age75older),
-         nonEnglish_index = nonEnglish/mean(df3$nonEnglish),
-         disability_index = disability/mean(df3$disability)
-  ) 
-
-vtrans_final_table <- df3 %>% select(Bzone,hispanic_index,low_income_index,racial_minority_index,age75older_index,nonEnglish_index,disability_index)
-vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index>3,3,vtrans_final_table$low_income_index)
-vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index<1,0,vtrans_final_table$low_income_index)
-vtrans_final_table$hispanic_index <- ifelse(vtrans_final_table$hispanic_index>3,3,vtrans_final_table$hispanic_index)
-vtrans_final_table$hispanic_index <- ifelse(vtrans_final_table$hispanic_index<1.5,0,vtrans_final_table$hispanic_index)
-vtrans_final_table$racial_minority_index <- ifelse(vtrans_final_table$racial_minority_index>3,3,vtrans_final_table$racial_minority_index)
-vtrans_final_table$racial_minority_index <- ifelse(vtrans_final_table$racial_minority_index<1.5,0,vtrans_final_table$racial_minority_index)
-vtrans_final_table$age75older_index <- ifelse(vtrans_final_table$age75older_index>3,3,vtrans_final_table$age75older_index)
-vtrans_final_table$age75older_index <- ifelse(vtrans_final_table$age75older_index<1.5,0,vtrans_final_table$age75older_index)
-vtrans_final_table$nonEnglish_index <- ifelse(vtrans_final_table$nonEnglish_index>3,3,vtrans_final_table$nonEnglish_index)
-vtrans_final_table$nonEnglish_index <- ifelse(vtrans_final_table$nonEnglish_index<1.5,0,vtrans_final_table$nonEnglish_index)
-vtrans_final_table$disability_index <- ifelse(vtrans_final_table$disability_index>3,3,vtrans_final_table$disability_index)
-vtrans_final_table$disability_index <- ifelse(vtrans_final_table$disability_index<1.5,0,vtrans_final_table$disability_index)
-
-vtrans_final_table <- vtrans_final_table %>% 
-  mutate(index = low_income_index+hispanic_index+racial_minority_index+age75older_index+nonEnglish_index)
-
-vtrans_final_table$EEA <- ifelse(vtrans_final_table$index>2,
-                                 ifelse(vtrans_final_table$low_income_index >1 | vtrans_final_table$disability_index>1,1,0),0)
-
-
-
-
-
-
-
-##################################################################################
-#### add-on script to save shapefiles, make plots for final output ###############
-
-
-bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
-vtrans_final_table_geo <-st_set_geometry(vtrans_final_table, bzone_geometry_reordered$geometry) 
-
-plot(vtrans_final_table_geo['EEA'],
-     main = 'Bzone - Equity Emphasis Areas')
+            B06012_004 = sum(B06012_004_this_area),
+            B06012_003 = sum(B06012_003_this_area), 
+            B06012_002 = sum(B06012_002_this_area),
+            B06012_001 = sum(B06012_001_this_area),
+            B01001_049 = sum(B01001_049_this_area),
+            B01001_048 = sum(B01001_048_this_area),
+            B01001_047 = sum(B01001_047_this_area),
+            B01001_025 = sum(B01001_025_this_area), 
+            B01001_024 = sum(B01001_024_this_area),
+            B01001_023 = sum(B01001_023_this_area),
+            B01001_001 = sum(B01001_001_this_area),
+            B02001_008 = sum(B02001_008_this_area),
+            B02001_007 = sum(B02001_007_this_area),
+            B02001_006 = sum(B02001_006_this_area), 
+            B02001_005 = sum(B02001_005_this_area),
+            B02001_004 = sum(B02001_004_this_area),
+            B02001_003 = sum(B02001_003_this_area),
+            B02001_002 = sum(B02001_002_this_area),
+            B03001_003 = sum(B03001_003_this_area),
+            B06007_008 = sum(B06007_008_this_area), 
+            B06007_005 = sum(B06007_005_this_area),
+            B06007_001 = sum(B06007_001_this_area),
+            B18101_038 = sum(B18101_038_this_area),
+            B18101_035 = sum(B18101_035_this_area),
+            B18101_032 = sum(B18101_032_this_area),
+            B18101_029 = sum(B18101_029_this_area), 
+            B18101_026 = sum(B18101_026_this_area),
+            B18101_023 = sum(B18101_023_this_area),
+            B18101_019 = sum(B18101_019_this_area),
+            B18101_016 = sum(B18101_016_this_area),
+            B18101_013 = sum(B18101_013_this_area),
+            B18101_010 = sum(B18101_010_this_area), 
+            B18101_007 = sum(B18101_007_this_area),
+            B18101_004 = sum(B18101_004_this_area),
+            B18101_001 = sum(B18101_001_this_area)
+          ) 
+  
 
