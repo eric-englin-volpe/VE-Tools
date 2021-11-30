@@ -78,4 +78,4 @@ bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
 PBOT_overall_geo <-st_set_geometry(PBOT_overall, bzone_geometry_reordered$geometry) 
 
 plot(PBOT_overall_geo['PBOT_index'],
-     main = 'Bzone - PBOT Index')
+     main = 'PBOT Bzone - PBOT Index')

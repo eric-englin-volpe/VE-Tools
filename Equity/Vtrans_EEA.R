@@ -48,12 +48,27 @@ vtrans_census_table_tract <- full_census_table_TAZ %>%
     hhs_hispanic = B03001_003,
     hhs_total = B01001_001
   ) %>%
-  select("Bzone",hhs_total,hhs_hispanic,hhs_white,hhs_disability,hhs_NonEnglish,hhs_75older,hhs_below150poverty)
+  select("Bzone",hhs_total,hhs_hispanic,hhs_white,hhs_disability,hhs_NonEnglish,hhs_75older,hhs_below150poverty)  %>%
+  mutate(
+    low_income_percent = hhs_below150poverty/hhs_total,
+    racial_minority_percent = (hhs_total-hhs_white)/hhs_total,
+    hispanic_percent = hhs_hispanic/hhs_total,
+    age75older_percent = hhs_75older/hhs_total,
+    nonEnglish_percent = hhs_NonEnglish/hhs_total,
+    disability_percent = hhs_disability/hhs_total
+  ) %>% 
+  mutate(
+    low_income_index = low_income_percent/mean(low_income_percent),
+    racial_minority_index = racial_minority_percent/mean(racial_minority_percent),
+    hispanic_index = hispanic_percent/mean(hispanic_percent),
+    age75older_index = age75older_percent/mean(age75older_percent),
+    nonEnglish_index = nonEnglish_percent/mean(nonEnglish_percent),
+    disability_index = disability_percent/mean(disability_percent)
+  )
 
 
 
-
-vtrans_final_table <- df3 %>% select(Bzone,hispanic_index,low_income_index,racial_minority_index,age75older_index,nonEnglish_index,disability_index)
+vtrans_final_table <- vtrans_census_table_tract %>% select(Bzone,hispanic_index,low_income_index,racial_minority_index,age75older_index,nonEnglish_index,disability_index)
 vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index>3,3,vtrans_final_table$low_income_index)
 vtrans_final_table$low_income_index <- ifelse(vtrans_final_table$low_income_index<1,0,vtrans_final_table$low_income_index)
 vtrans_final_table$hispanic_index <- ifelse(vtrans_final_table$hispanic_index>3,3,vtrans_final_table$hispanic_index)
@@ -87,4 +102,4 @@ bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
 vtrans_final_table_geo <-st_set_geometry(vtrans_final_table, bzone_geometry_reordered$geometry) 
 
 plot(vtrans_final_table_geo['EEA'],
-     main = 'Bzone - Equity Emphasis Areas')
+     main = 'VTrans Bzone - Equity Emphasis Areas')
