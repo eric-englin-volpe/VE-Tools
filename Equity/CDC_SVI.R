@@ -73,20 +73,28 @@ df <- df %>%   group_by(id_tract)%>%
   summarise(shape_area = sum(area))%>%
   right_join(df, by = "id_tract") 
 
+#find the total area of every census tract
+df <- df %>%   group_by(id_bzone)%>%
+  summarise(shape_area_bzone = sum(area)) %>%
+  right_join(df, by = "id_bzone") 
+
 
 cdc_svi_tract$id_tract <- seq.int(nrow(cdc_svi_tract)) #make column so we can join census tract df with intersection df
 df2<- merge(df, cdc_svi_tract, by = "id_tract", by.y = "id_tract", all.x=TRUE) %>% 
-  mutate(share.area = area/shape_area,
+  mutate(share.area = area/shape_area_bzone,
          RPL_THEME1_this_area = RPL_THEME1 * share.area,
          RPL_THEME2_this_area = RPL_THEME2 * share.area, # multiply to get value in each intersected polygon
          RPL_THEME3_this_area = RPL_THEME3 * share.area,
          RPL_THEME4_this_area = RPL_THEME4 * share.area,
          RPL_THEMES_this_area = RPL_THEMES * share.area) #calculate % of tract in each bzone
 
+write.csv(df2,file.path(proj_dir, "df2.csv"))
+
 # Finalize dataframe -------------------------
 cdc_svi_TAZ <- df2 %>%  
   group_by(Bzone)%>%
   summarise(n = n(),
+            Bzone_area = sum(area),
             RPL_THEME1 = sum(RPL_THEME1_this_area),
             RPL_THEME2 = sum(RPL_THEME2_this_area), 
             RPL_THEME3 = sum(RPL_THEME3_this_area),
