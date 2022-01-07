@@ -7,9 +7,11 @@
 #     Vtrans methodology: https://icfbiometrics.blob.core.windows.net/vtrans/assets/docs/2020_VTrans_Mid-term_Needs_DRAFT_Technical_Guide.pdf
 #===========
 
-source("Data Prep/config.R")
-source("Equity/download_Census_data.R")
 
+if(!exists('full_census_table_TAZ')){
+  source("Data Prep/config.R")
+  source("Equity/download_Census_data.R")
+}
 
 # Install/Load libraries --------------
 source("Data Prep/get_packages.R")
@@ -99,7 +101,11 @@ vtrans_final_table$EEA <- ifelse(vtrans_final_table$index>2,
 
 
 bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
-vtrans_final_table_geo <-st_set_geometry(vtrans_final_table, bzone_geometry_reordered$geometry) 
+vtrans_final_table_geo <- st_set_geometry(vtrans_final_table, bzone_geometry_reordered$geometry) 
 
 plot(vtrans_final_table_geo['EEA'],
      main = 'VTrans Bzone - Equity Emphasis Areas')
+
+
+write.csv(vtrans_final_table, file.path(working_dir, 'VTrans_Equity_Bzones.csv'), row.names = F)
+

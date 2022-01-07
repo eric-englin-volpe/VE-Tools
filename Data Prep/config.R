@@ -22,7 +22,11 @@ library(rgeos)
 library(rlist)
 
 #set project directory folders
-proj_dir <- 'C:/Users/eric.englin/Desktop/VisionEval/VDOT/'
+
+#proj_dir <- 'C:/Users/eric.englin/Desktop/VisionEval/VDOT/'
+proj_dir <- 'C:/Users/daniel.flynn/Desktop/VisionEval/VDOT/'
+
+if(!dir.exists(proj_dir)){ dir.create(proj_dir)}
 
 
 #create folders

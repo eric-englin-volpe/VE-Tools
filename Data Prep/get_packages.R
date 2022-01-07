@@ -2,20 +2,21 @@
 # add any packages your scripts require here. Keep in alphabetical order.
 
 loadpacks <- c(
+  'BAMMtools',
   'dplyr', 
+  'ggplot2',
+  'leaflet', 
+  'readr',
   'rgeos',
   'rlist',
+  'sf', 
+  'sp',
   'tidyverse', 
   'tidycensus', 
-  'viridis', 
-  'leaflet', 
-  'readr', 
-  'sp', 
-  'sf',
-  'ggplot2'
+  'viridis'
   )
 
 for(i in loadpacks){
-  if(length(grep(i, (.packages(all.available=T))))==0) install.packages(i, dependencies =TRUE)
+  if(!i %in% (.packages(all.available=T))) install.packages(i, dependencies =TRUE)
   }
 rm(i, loadpacks)

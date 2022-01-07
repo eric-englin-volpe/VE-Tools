@@ -5,11 +5,14 @@
 # Description: 
 #     This script will use downloaded CDC data on Social Vulnerability Index
 #     CDC SVI download: https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html
+#     Download by State, csv format, for latest year
+
 #===========
 
-source("Data Prep/config.R")
-source("Equity/download_Census_data.R")
-
+if(!exists('full_census_table_TAZ')){
+  source("Data Prep/config.R")
+  source("Equity/download_Census_data.R")
+}
 
 # Install/Load libraries --------------
 source("Data Prep/get_packages.R")
@@ -28,7 +31,7 @@ library(rlist)
 
 # CDC SVI requirements --------------
 
-cdc_svi_table_virginia <- read_csv(file.path(proj_dir, 'Virginia.csv'))
+cdc_svi_table_virginia <- read_csv(file.path(working_dir, 'Virginia.csv'))
 cdc_svi_table_virginia['GEOID']<-cdc_svi_table_virginia['FIPS']
 cdc_svi_table_virginia <- as.data.frame(cdc_svi_table_virginia)
 
@@ -113,3 +116,5 @@ cdc_svi_TAZ_geo <-st_set_geometry(cdc_svi_TAZ, bzone_geometry_reordered$geometry
 
 plot(cdc_svi_TAZ_geo['RPL_THEMES_clean'],
      main = 'CDC SVI Bzone - RPL Themes')
+
+write.csv(cdc_svi_TAZ, file.path(working_dir, 'SVI_Equity_Bzones.csv'), row.names = F)

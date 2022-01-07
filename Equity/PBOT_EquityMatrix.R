@@ -7,8 +7,10 @@
 #     PBOT methodology: https://www.portland.gov/transportation/justice/pbot-equity-matrix
 #===========
 
-source("Data Prep/config.R")
-source("Equity/download_Census_data.R")
+if(!exists('full_census_table_TAZ')){
+  source("Data Prep/config.R")
+  source("Equity/download_Census_data.R")
+}
 
 
 # Install/Load libraries --------------
@@ -25,7 +27,6 @@ library(sf)
 library(rgeos)
 library(rlist)
 
-#install.packages("BAMMtools")
 library(BAMMtools)
 
 # Vtrans requirements --------------
@@ -73,9 +74,11 @@ PBOT_overall$PBOT_index <- PBOT_overall$income_index + PBOT_overall$race_index
 ##################################################################################
 #### add-on script to save shapefiles, make plots for final output ###############
 
-
 bzone_geometry_reordered <- bzone_geometry[order(bzone_geometry$Bzone),]
-PBOT_overall_geo <-st_set_geometry(PBOT_overall, bzone_geometry_reordered$geometry) 
+PBOT_overall_geo <- st_set_geometry(PBOT_overall, bzone_geometry_reordered$geometry) 
 
 plot(PBOT_overall_geo['PBOT_index'],
      main = 'PBOT Bzone - PBOT Index')
+
+write.csv(PBOT_overall, file.path(working_dir, 'PBOT_Equity_Bzones.csv'), row.names = F)
+

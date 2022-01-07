@@ -8,9 +8,10 @@
 #     MWCOG map of output: https://gis.mwcog.org/webmaps/tpb/clrp/ej/
 #===========
 
-source("Data Prep/config.R")
-source("Equity/download_Census_data.R")
-
+if(!exists('full_census_table_TAZ')){
+  source("Data Prep/config.R")
+  source("Equity/download_Census_data.R")
+}
 
 # Install/Load libraries --------------
 source("Data Prep/get_packages.R")
@@ -93,5 +94,6 @@ plot(mwcog_final_tablegeo['total_index'],
      main = 'Bzone - MWCOG Equity Index')
 
 plot(mwcog_final_tablegeo['EEA'],
-     main = 'Bzone - Equity Emphasis Area')
+     main = 'Bzone - MWCOG Equity Emphasis Area')
 
+write.csv(mwcog_final_table, file.path(working_dir, 'MWCOG_Equity_Bzones.csv'), row.names = F)

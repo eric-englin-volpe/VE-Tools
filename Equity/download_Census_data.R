@@ -30,8 +30,8 @@ library(rlist)
 fileName <- 'census_api.txt'
 
 # check if census_api.txt is in the working directory
-if(!file.exists(file.path(working_dir,fileName))){ 
-  stop(paste('Census API Key needed in as a plain text file in /n', file.path(working_dir), '/n go to https://api.census.gov/data/key_signup.html /n and save the API key as `census_api.txt`'))
+if(!file.exists(file.path(working_dir, fileName))){ 
+  stop(paste('Census API Key needed in as a plain text file in /n', file.path(working_dir), '\n go to https://api.census.gov/data/key_signup.html \n and save the API key as `census_api.txt`'))
 }
 
 mystring <- read_file(file.path(working_dir, fileName))
