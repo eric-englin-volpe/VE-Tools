@@ -18,7 +18,6 @@ if(!exists('full_census_table_TAZ')){
 # Install/Load libraries --------------
 source("Data Prep/get_packages.R")
 source("Equity/Vtrans_EEA.R")
-source("Equity/MWCOG_EEA.R")
 
 library(dplyr)
 library(tidyverse)
@@ -78,9 +77,34 @@ future_telework_df_bzone <- future_telework_df %>%
   )
 
 
+# Pull variables of interest, join tables
+
+base_df_bzone_slim <- base_df_bzone  %>%
+  mutate(DailyCO2e_2019 = DailyCO2e, 
+         DVMT_2019 = DVMT)%>% select(Bzone, DailyCO2e_2019, DVMT_2019)
+future_df_bzone_slim <- future_df_bzone%>%
+  mutate(DailyCO2e_2045_base = DailyCO2e, 
+         DVMT_2045_base = DVMT) %>% select(Bzone, DailyCO2e_2045_base, DVMT_2045_base)
+future_telework_df_bzone_slim <- future_telework_df_bzone %>%
+  mutate(DailyCO2e_2045_telework = DailyCO2e, 
+         DVMT_2045_telework = DVMT)%>% select(Bzone, DailyCO2e_2045_telework, DVMT_2045_telework)
+
+combined_df <- base_df_bzone_slim %>% merge(future_df_bzone_slim) %>%
+  merge(future_telework_df_bzone_slim)
+
+
+combined_df <- left_join(base_df_bzone_slim, future_df_bzone_slim, 
+                           by = c("Bzone" = "Bzone"))
+
+combined_df <- left_join(combined_df, future_telework_df_bzone_slim, 
+                         by = c("Bzone" = "Bzone"))
+
+
+# Add VDOT EEA Indices
+
+combined_df <- left_join(combined_df, vtrans_final_table, 
+                         by = c("Bzone" = "Bzone"))
 
 
 
-
-
-
+write.csv(combined_df, "Example Data/VDOT_scenarios.csv")
