@@ -64,3 +64,4 @@ geo = bzone_geometry %>%
 counties <- c(059, 600, 610) #enter county codes here
 counties_geoids <- c(51059, 51600, 51610) #enter county codes with state code
 state <- "VA"
+

@@ -43,7 +43,7 @@ hh <- hh %>%
 
 hh <- hh %>%
   mutate(Pct_Own_Cost = OwnCost / Income,
-         Pct_Own_Cost = ifelse(Pct_Own_Cost > 1e4, NA, Pct_Own_Cost))
+         Pct_Own_Cost = ifelse(Pct_Own_Cost > 5, NA, Pct_Own_Cost))
 
 # Summarize by each index
 

@@ -51,7 +51,8 @@ try(readRenviron("~/.Renviron")) # will check R environment for past api keys
 
 pull_census_data <- function(state, counties, table, var_list){
   census_table_pull <- get_acs(geography = "tract", table = table,
-                               state = state, county = counties, geometry = FALSE) 
+                               state = state, county = counties, geometry = FALSE,
+                               cache_table = TRUE) 
   counter<-0
   for (var in var_list){
     print(var)
@@ -113,7 +114,7 @@ full_census_table <- poverty_census %>%
 
 #Pull geometry
 tract_table_geo <- get_acs(geography = "tract", table = "B19001",
-                           state = state, county = counties, geometry = TRUE) %>% 
+                           state = state, county = counties, geometry = TRUE, cache_table = TRUE) %>% 
   filter(variable == "B19001_001") %>%
   select(GEOID)
 
